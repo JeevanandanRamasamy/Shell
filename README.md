@@ -90,9 +90,9 @@ Background jobs have an ampersand at the end of the command, whether they were i
 
 To get into the shell, we run
 
-$ ./shell                     # on the normal bash prompt
+$ ./shell&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# on the normal bash prompt
 
-\>                            # now at your shell prompt, waiting for input
+\>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# now at your shell prompt, waiting for input
 
 Then we can run a program:
 
@@ -166,6 +166,6 @@ If we foreground it, we have to wait for it to complete (or suspend it again):
 
 [1] 1248 Running /bin/sleep 100 &
 
-\> fg %1                      # ...and wait...
+\> fg %1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ...and wait...
 
 \>
