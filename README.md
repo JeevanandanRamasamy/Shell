@@ -92,7 +92,7 @@ To get into the shell, we run
 
 $ ./shell                     # on the normal bash prompt
 
-\>                             # now at your shell prompt, waiting for input
+\>                            # now at your shell prompt, waiting for input
 
 Then we can run a program:
 
@@ -166,6 +166,6 @@ If we foreground it, we have to wait for it to complete (or suspend it again):
 
 [1] 1248 Running /bin/sleep 100 &
 
-\> fg %1 # ...and wait...
+\> fg %1                      # ...and wait...
 
 \>
