@@ -2,170 +2,165 @@
 
 ## Program Execution
 
-The shell prints a > prompt (greater sign and a space) and reads input from the user. It is able to execute other programs, with command-line options, whether they’re specified with an absolute path:
+The shell prompts the user with a `>` sign and reads input. It is capable of executing programs using either an absolute or relative path, as shown below:
 
-\> /bin/ls -l
+```bash
+> /bin/ls -l
+```
 
-or a relative path:
+or
 
-\> ../src/hello
+```bash
+> ../src/hello
+```
 
-If the file doesn’t exist, it prints the path and executable, followed by “No such file or directory”. For example,
+If a file doesn’t exist, the shell outputs the path and executable followed by “No such file or directory”:
 
-\> ../src/hello
-
+```bash
+> ../src/hello
 ../src/hello: No such file or directory
+```
 
-If a command is given with no absolute/relative path (e.g., “ls”), and it’s not a built-in command (see below), the shell looks in /usr/bin and /bin (in that order) and executes the first such program found. If it’s not found in either location, the shell prints “commandName: command not found” (with commandName replaced by the actual command). For example,
+If no absolute/relative path is provided for a command (e.g., “ls”), and it’s not a built-in command, the shell will search in `/usr/bin` and `/bin` (in that order) and execute the first matching program found. If it’s not found in either directory, the shell prints an error message:
 
-\> burrito
-
+```
+> burrito
 burrito: command not found
+```
 
-If the command line ends in an ampersand, the shell runs the program in the background. Otherwise, it runs the program in the foreground and waits for the executed program to complete before reading another line of input.
+If a command ends with an ampersand (`&`), the program is executed in the background. Otherwise, it runs in the foreground, and the shell waits for the program to complete before prompting for the next input.
 
-Each line of input defines a job and is assigned a job ID, starting at 1. Job IDs are written with a %, as in %1, to distinguish them from process IDs (PIDs). Jobs also have a status of running, stopped, or terminated.
+Each line of input represents a job and is assigned a job ID starting from 1. Job IDs are shown with a `%`, e.g., `%1`, to distinguish them from process IDs (PIDs). Jobs can have one of the following statuses: running, stopped, or terminated.
 
-If a command is run in the background, the shell prints the job ID and process ID, as in:
+For background jobs, the shell displays the job ID along with the process ID:
 
-\> ./hello &
-
+```
+> ./hello &
 [1] 4061
+```
 
-The command consists of a program and arguments separated by whitespace (possibly leading or trailing). No commands or arguments should have quoted strings or escape characters. For example, these are all valid inputs (with spaces shown explicitly):
+The command consists of a program and its arguments, separated by whitespace (spaces or tabs). No commands or arguments should include quoted strings or escape characters. These are all valid inputs (with spaces shown explicitly):
 
-␣␣␣./hello␣␣␣␣&
+```
+   ./hello   
+./hello&   
+./hello   
+   ./hello   
+   ./hello -a -b -c &
+```
 
-./hello&␣␣␣
+The shell reaps all zombie children created by executed processes. If a child process terminates due to an unhandled signal, the shell prints a message with the relevant job ID, process ID, and signal:
 
-./hello␣␣
-
-␣␣␣./hello
-
-␣␣./hello␣␣␣-a␣␣␣-b␣␣␣␣␣␣␣␣-c␣␣␣␣␣␣␣␣&
-
-The shell reaps all zombie children created by any executed process. If any child process terminates due to an unhandled signal, it prints a message with the relevant job ID, process ID, and signal:
-
+```
 [1] 1464 terminated by signal 2
+```
 
 ## Signals
 
-- ctrl-c sends SIGINT to the foreground job and any of its child processes
+- `ctrl-c` sends **SIGINT** to the foreground job and any of its child processes.
+- `ctrl-z` sends **SIGTSTP** to the foreground job and any of its child processes.
 
-- ctrl-z sends SIGTSTP to the foreground job and any of its child processes
+If there is no current foreground job, `ctrl-c` and `ctrl-z` will do nothing.
 
-If there is no current foreground job, ctrl-c and ctrl-z do nothing.
+- **SIGINT** (by default) will cause the receiving job to terminate. It does not terminate the shell.
+- **SIGTSTP** suspends the receiving job until it receives the **SIGCONT** signal. It does not suspend the shell. In the shell, you can resume a suspended job in the background (with the built-in command `bg`), foreground (with the built-in command `fg`), or kill it (with the built-in command `kill`).
 
-SIGINT (by default) will cause the receiving job to terminate. It does not terminate the shell.
+## Built-in Commands
 
-SIGTSTP will suspend the receiving job until it receives the SIGCONT signal. It does not suspend the shell. In the shell, you can resume a suspended job in the background (with built-in command bg) or foreground (with built-in command fg), or kill it (with built-in command kill).
+The shell supports the following built-in commands:
 
-## Built-in commands
+- `bg <jobID>`: Run a suspended job in the background.
+- `cd [path]`: Change the current directory to the given (absolute or relative) path. If no path is provided, the shell uses the environment variable `HOME`. After running `cd`, the shell updates the `PWD` variable with the current working directory.
+- `exit`: Exit the shell. The shell also exits if the user presses `ctrl-d` on an empty input line. When the shell exits, it sends **SIGHUP** followed by **SIGCONT** to any stopped jobs, and **SIGHUP** to any running jobs.
+- `fg <jobID>`: Run a suspended or background job in the foreground.
+- `jobs`: List the current jobs, including their job ID, process ID, status, and command. If no jobs exist, this prints nothing.
 
-The shell recognizes these built-in commands:
-
-- bg <jobID>: Run a suspended job in the background.
-
-- cd [path]: Change current directory to the given (absolute or relative) path. If no path is given, the environment variable HOME is used. The shell updates the environment variable PWD with the (absolute) present working directory after running cd.
-
-- exit: Exit the shell. The shell also exits if the user hits ctrl-d on an empty input line. When the shell exits, it first sends SIGHUP followed by SIGCONT to any stopped jobs, and SIGHUP to any running jobs.
-
-- fg <jobID>: Run a suspended or background job in the foreground.
-
-- jobs: List current jobs, including their job ID, process ID, current status, and command. If no jobs exist, this prints nothing.
-
+```
 > jobs
-
 [1] 1432 Running ./test1 &
-
 [2] 1487 Running ./hello &
-
 [3] 1504 Stopped ./foo
+```
 
-Background jobs have an ampersand at the end of the command, whether they were initially run that way or were suspended and then placed in the background.
-
-- kill <jobID>: Send SIGTERM to the given job.
+- `kill <jobID>`: Send **SIGTERM** to the specified job.
 
 ## Examples
 
-To get into the shell, we run
+1. **Starting the Shell**
 
-$ ./shell&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# on the normal bash prompt
+To enter the shell, run:
 
-\>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# now at your shell prompt, waiting for input
+```
+$ ./shell                # on the normal bash prompt
+>                         # now at your shell prompt, waiting for input
+```
 
-Then we can run a program:
+2. **Running a Program**
 
-\> /bin/echo hello
+Run a program like `echo`:
 
+```
+> /bin/echo hello
 hello
+>
+```
 
-\>
+3. **Running and Killing a Process**
 
-We can run something longer and kill it with ctrl-c:
+Run a process (e.g., `sleep`) and then kill it using `ctrl-c`:
 
-\> /bin/sleep 100
-
+```
+> /bin/sleep 100
 ^C
-
 [1] 1464 terminated by signal 2
+>
+```
 
-\>
+4. **Suspending a Process**
 
-We can run sleep again and suspend it with ctrl-z:
+Run `sleep` and suspend it with `ctrl-z`:
 
-\> /bin/sleep 100
-
+```
+> /bin/sleep 100
 ^Z
-
-\>
-
-Then jobs shows the suspended job:
-
-\> jobs
-
+>
+> jobs
 [1] 1234 Stopped /bin/sleep 100
+```
 
-\>
+Then you can either foreground it (`fg %1`), background it (`bg %1`), or kill it (`kill %1`):
 
-Then we could foreground it (fg %1), background it (bg %1), or kill it (kill %1).
-
-\> bg %1
-
-\> jobs
-
+```
+> bg %1
+> jobs
 [1] 1234 Running /bin/sleep 100 &
-
-\> kill %1
-
+> kill %1
 [1] 1234 terminated by signal 15
+> jobs
+>
+```
 
-\> jobs
+5. **Running in the Background**
 
-\>
+Run `sleep` in the background:
 
-Running it with & runs it in the background:
-
-\> /bin/sleep 100 &
-
+```
+> /bin/sleep 100 &
 [1] 1248
-
-\> jobs
-
+> jobs
 [1] 1248 Running /bin/sleep 100 &
+>
+```
 
-\>
+6. **Foregrounding a Process**
 
-If we foreground it, we have to wait for it to complete (or suspend it again):
+If you run a process in the background, you can bring it to the foreground with `fg`:
 
-\> /bin/sleep 100 &
-
+```
+> /bin/sleep 100 &
 [1] 1248
-
-\> jobs
-
+> jobs
 [1] 1248 Running /bin/sleep 100 &
-
-\> fg %1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ...and wait...
-
-\>
+> fg %1        # ...and wait...
+>
+```
